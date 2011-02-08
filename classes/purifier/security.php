@@ -49,11 +49,27 @@ class Purifier_Security extends Kohana_Security {
 				$config->loadArray($settings);
 			}
 
+			// Configure additional options
+			$config = Security::configure($config);
+
 			// Create the purifier instance
 			Security::$htmlpurifier = new HTMLPurifier($config);
 		}
 
 		return Security::$htmlpurifier;
+	}
+
+	/**
+	 * Modifies the configuration before creating a HTML Purifier instance.
+	 *
+	 * [!!] You must create an extension and overload this method to use it.
+	 *
+	 * @param   HTMLPurifier_Config  configuration object
+	 * @return  HTMLPurifier_Config
+	 */
+	public static function configure(HTMLPurifier_Config $config)
+	{
+		return $config;
 	}
 
 	/**
