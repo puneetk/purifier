@@ -73,6 +73,43 @@ class Purifier_Security extends Kohana_Security {
 	}
 
 	/**
+	 * Adds an element to the allowedElements list
+	 *
+	 *  Security::addpurifierelement("cms", Array("attributes" => Array("name" => "Text")));
+	 *
+	 * @param   elementname elementname to add to the allowedelements
+	 * @param   elementconfig   array with config options for the new element; currently only 'attributes' are supported
+	 */
+	 public static function addpurifierelement($elementname, $elementconfig = Array())
+	 {
+	    $config = HTMLPurifier_Config::createDefault(); // TODO: check whether it is possible to just fetch the existing configuration
+        if (is_array($settings = Kohana::config('purifier.settings')))
+		{
+			// Load the settings
+			$config->loadArray($settings);
+		}
+		
+		if (!isset($elementconfig["attributes"]) OR !is_array($elementconfig["attributes"]))
+		{
+		    $elementconfig["attributes"] = Array();
+		}
+        
+        $config->set('Core.Encoding', "UTF-8");
+        $config->set('HTML.DefinitionID', 'cms-specific');
+        $config->set('Cache.DefinitionImpl', null);
+        
+        $def = $config->getHTMLDefinition(true);
+        $element = $def->addElement(
+          $elementname,   // name
+          'Inline',  // content set
+          'Flow', // allowed children
+          'Common', // attribute collection
+           $elementconfig["attributes"]
+        );
+        Security::$htmlpurifier = new HTMLPurifier($config);
+	 }
+
+	/**
 	 * Removes broken HTML and XSS from text using [HTMLPurifier](http://htmlpurifier.org/).
 	 *
 	 *     $text = Security::xss_clean(Arr::get($_POST, 'message'));
