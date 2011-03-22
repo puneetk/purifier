@@ -15,6 +15,11 @@ class Purifier_Security extends Kohana_Security {
 	 * @var  HTMLPurifier  singleton instance of the HTML Purifier object
 	 */
 	protected static $htmlpurifier;
+	
+	/**
+	 * @var  HTMLPurifierconfig  config to be used for the next instantiation of HTMLPurifier
+	 */
+	protected static $htmlpurifierconfig = False;
 
 	/**
 	 * Returns the singleton instance of HTML Purifier. If no instance has
@@ -40,14 +45,25 @@ class Purifier_Security extends Kohana_Security {
 			// Load the HTML Purifier auto loader
 			require_once Kohana::find_file('vendor', 'htmlpurifier/library/HTMLPurifier.auto');
 
-			// Create a new configuration object
-			$config = HTMLPurifier_Config::createDefault();
-
-			if (is_array($settings = Kohana::config('purifier.settings')))
+			// Create a new configuration object, or load it if there is already one set
+			if (Security::$htmlpurifierconfig)
 			{
-				// Load the settings
-				$config->loadArray($settings);
+			    $config = Security::$htmlpurifierconfig;
 			}
+			else
+			{
+			    $config = HTMLPurifier_Config::createDefault();
+			    $config->autoFinalize = false; // To allow for later changes to the config
+
+			    if (is_array($settings = Kohana::config('purifier.settings')))
+			    {
+				    // Load the settings
+				    $config->loadArray($settings);
+			    }
+			
+			    // Save configuration for later use
+			    Security::$htmlpurifierconfig = $config;
+		    }
 
 			// Configure additional options
 			$config = Security::configure($config);
@@ -58,20 +74,7 @@ class Purifier_Security extends Kohana_Security {
 
 		return Security::$htmlpurifier;
 	}
-
-	/**
-	 * Modifies the configuration before creating a HTML Purifier instance.
-	 *
-	 * [!!] You must create an extension and overload this method to use it.
-	 *
-	 * @param   HTMLPurifier_Config  configuration object
-	 * @return  HTMLPurifier_Config
-	 */
-	public static function configure(HTMLPurifier_Config $config)
-	{
-		return $config;
-	}
-
+	
 	/**
 	 * Adds an element to the allowedElements list
 	 *
@@ -82,12 +85,22 @@ class Purifier_Security extends Kohana_Security {
 	 */
 	 public static function addpurifierelement($elementname, $elementconfig = Array())
 	 {
-	    $config = HTMLPurifier_Config::createDefault(); // TODO: check whether it is possible to just fetch the existing configuration
-        if (is_array($settings = Kohana::config('purifier.settings')))
+	    // Create a new configuration object, or load it if there is already one set
+		if (Security::$htmlpurifierconfig != False)
 		{
-			// Load the settings
-			$config->loadArray($settings);
+		    $config = Security::$htmlpurifierconfig;
 		}
+		else
+		{
+		    $config = HTMLPurifier_Config::createDefault();
+		    $config->autoFinalize = false; // To allow for later changes to the config
+
+		    if (is_array($settings = Kohana::config('purifier.settings')))
+		    {
+			    // Load the settings
+			    $config->loadArray($settings);
+		    }
+	    }
 		
 		if (!isset($elementconfig["attributes"]) OR !is_array($elementconfig["attributes"]))
 		{
@@ -106,8 +119,22 @@ class Purifier_Security extends Kohana_Security {
           'Common', // attribute collection
            $elementconfig["attributes"]
         );
-        Security::$htmlpurifier = new HTMLPurifier($config);
+	    // Save configuration for later use
+	    Security::$htmlpurifierconfig = $config;
 	 }
+
+	/**
+	 * Modifies the configuration before creating a HTML Purifier instance.
+	 *
+	 * [!!] You must create an extension and overload this method to use it.
+	 *
+	 * @param   HTMLPurifier_Config  configuration object
+	 * @return  HTMLPurifier_Config
+	 */
+	public static function configure(HTMLPurifier_Config $config)
+	{
+		return $config;
+	}
 
 	/**
 	 * Removes broken HTML and XSS from text using [HTMLPurifier](http://htmlpurifier.org/).
