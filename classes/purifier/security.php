@@ -15,6 +15,11 @@ class Purifier_Security extends Kohana_Security {
 	 * @var  HTMLPurifier  singleton instance of the HTML Purifier object
 	 */
 	protected static $htmlpurifier;
+	
+	/**
+	 * @var  HTMLPurifierconfig  config to be used for the next instantiation of HTMLPurifier
+	 */
+	protected static $htmlpurifierconfig = False;
 
 	/**
 	 * Returns the singleton instance of HTML Purifier. If no instance has
@@ -43,14 +48,25 @@ class Purifier_Security extends Kohana_Security {
 				require Kohana::find_file('vendor', 'htmlpurifier/library/HTMLPurifier.auto');
 			}
 
-			// Create a new configuration object
-			$config = HTMLPurifier_Config::createDefault();
-
-			if (is_array($settings = Kohana::config('purifier.settings')))
+			// Create a new configuration object, or load it if there is already one set
+			if (Security::$htmlpurifierconfig)
 			{
-				// Load the settings
-				$config->loadArray($settings);
+			    $config = Security::$htmlpurifierconfig;
 			}
+			else
+			{
+			    $config = HTMLPurifier_Config::createDefault();
+			    $config->autoFinalize = false; // To allow for later changes to the config
+
+			    if (is_array($settings = Kohana::config('purifier.settings')))
+			    {
+				    // Load the settings
+				    $config->loadArray($settings);
+			    }
+			
+			    // Save configuration for later use
+			    Security::$htmlpurifierconfig = $config;
+		    }
 
 			// Configure additional options
 			$config = Security::configure($config);
@@ -61,6 +77,54 @@ class Purifier_Security extends Kohana_Security {
 
 		return Security::$htmlpurifier;
 	}
+	
+	/**
+	 * Adds an element to the allowedElements list
+	 *
+	 *  Security::addpurifierelement("cms", Array("attributes" => Array("name" => "Text")));
+	 *
+	 * @param   elementname elementname to add to the allowedelements
+	 * @param   elementconfig   array with config options for the new element; currently only 'attributes' are supported
+	 */
+	 public static function addpurifierelement($elementname, $elementconfig = Array())
+	 {
+	    // Create a new configuration object, or load it if there is already one set
+		if (Security::$htmlpurifierconfig != False)
+		{
+		    $config = Security::$htmlpurifierconfig;
+		}
+		else
+		{
+		    $config = HTMLPurifier_Config::createDefault();
+		    $config->autoFinalize = false; // To allow for later changes to the config
+
+		    if (is_array($settings = Kohana::config('purifier.settings')))
+		    {
+			    // Load the settings
+			    $config->loadArray($settings);
+		    }
+	    }
+		
+		if (!isset($elementconfig["attributes"]) OR !is_array($elementconfig["attributes"]))
+		{
+		    $elementconfig["attributes"] = Array();
+		}
+        
+        $config->set('Core.Encoding', "UTF-8");
+        $config->set('HTML.DefinitionID', 'cms-specific');
+        $config->set('Cache.DefinitionImpl', null);
+        
+        $def = $config->getHTMLDefinition(true);
+        $element = $def->addElement(
+          $elementname,   // name
+          'Inline',  // content set
+          'Flow', // allowed children
+          'Common', // attribute collection
+           $elementconfig["attributes"]
+        );
+	    // Save configuration for later use
+	    Security::$htmlpurifierconfig = $config;
+	 }
 
 	/**
 	 * Modifies the configuration before creating a HTML Purifier instance.
