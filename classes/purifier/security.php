@@ -15,11 +15,6 @@ class Purifier_Security extends Kohana_Security {
 	 * @var  HTMLPurifier  singleton instance of the HTML Purifier object
 	 */
 	protected static $htmlpurifier;
-	
-	/**
-	 * @var  HTMLPurifierconfig  config to be used for the next instantiation of HTMLPurifier
-	 */
-	protected static $htmlpurifierconfig = False;
 
 	/**
 	 * Returns the singleton instance of HTML Purifier. If no instance has
@@ -48,25 +43,20 @@ class Purifier_Security extends Kohana_Security {
 				require Kohana::find_file('vendor', 'htmlpurifier/library/HTMLPurifier.auto');
 			}
 
-			// Create a new configuration object, or load it if there is already one set
-			if (Security::$htmlpurifierconfig)
-			{
-			    $config = Security::$htmlpurifierconfig;
-			}
-			else
-			{
-			    $config = HTMLPurifier_Config::createDefault();
-			    $config->autoFinalize = false; // To allow for later changes to the config
+			// Load default configuration
+			$config = HTMLPurifier_Config::createDefault();
 
-			    if (is_array($settings = Kohana::config('purifier.settings')))
-			    {
-				    // Load the settings
-				    $config->loadArray($settings);
-			    }
-			
-			    // Save configuration for later use
-			    Security::$htmlpurifierconfig = $config;
-		    }
+			// Allow configuration to be modified
+			$config->autoFinalize = FALSE;
+
+			// Use the same character set as Kohana
+			$config->set('Core.Encoding', Kohana::$charset);
+
+			if (is_array($settings = Kohana::config('purifier.settings')))
+			{
+				// Load the settings
+				$config->loadArray($settings);
+			}
 
 			// Configure additional options
 			$config = Security::configure($config);
@@ -77,7 +67,7 @@ class Purifier_Security extends Kohana_Security {
 
 		return Security::$htmlpurifier;
 	}
-	
+
 	/**
 	 * Adds an element to the allowedElements list
 	 *
@@ -88,32 +78,17 @@ class Purifier_Security extends Kohana_Security {
 	 */
 	 public static function addpurifierelement($elementname, $elementconfig = Array())
 	 {
-	    // Create a new configuration object, or load it if there is already one set
-		if (Security::$htmlpurifierconfig != False)
-		{
-		    $config = Security::$htmlpurifierconfig;
-		}
-		else
-		{
-		    $config = HTMLPurifier_Config::createDefault();
-		    $config->autoFinalize = false; // To allow for later changes to the config
+		// Load configuration
+		$config = Security::htmlpurifier()->config;
 
-		    if (is_array($settings = Kohana::config('purifier.settings')))
-		    {
-			    // Load the settings
-			    $config->loadArray($settings);
-		    }
-	    }
-		
 		if (!isset($elementconfig["attributes"]) OR !is_array($elementconfig["attributes"]))
 		{
 		    $elementconfig["attributes"] = Array();
 		}
-        
-        $config->set('Core.Encoding', "UTF-8");
+
         $config->set('HTML.DefinitionID', 'cms-specific');
         $config->set('Cache.DefinitionImpl', null);
-        
+
         $def = $config->getHTMLDefinition(true);
         $element = $def->addElement(
           $elementname,   // name
@@ -122,8 +97,6 @@ class Purifier_Security extends Kohana_Security {
           'Common', // attribute collection
            $elementconfig["attributes"]
         );
-	    // Save configuration for later use
-	    Security::$htmlpurifierconfig = $config;
 	 }
 
 	/**
