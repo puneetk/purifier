@@ -46,6 +46,12 @@ class Purifier_Security extends Kohana_Security {
 			// Create a new configuration object
 			$config = HTMLPurifier_Config::createDefault();
 
+			if ( ! Kohana::config('purifier.finalize'))
+			{
+				// Allow configuration to be modified
+				$config->autoFinalize = FALSE;
+			}
+
 			// Use the same character set as Kohana
 			$config->set('Core.Encoding', Kohana::$charset);
 
