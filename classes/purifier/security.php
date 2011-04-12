@@ -11,6 +11,9 @@
  */
 class Purifier_Security extends Kohana_Security {
 
+	// Current purifier version
+	const PURIFIER = '1.2.0';
+
 	/**
 	 * @var  HTMLPurifier  singleton instance of the HTML Purifier object
 	 */
@@ -30,18 +33,30 @@ class Purifier_Security extends Kohana_Security {
 	{
 		if ( ! Security::$htmlpurifier)
 		{
-			if (Kohana::config('purifier.preload'))
+			if ( ! class_exists('HTMLPurifier_Config', FALSE))
 			{
-				// Load the all of HTML Purifier right now.
-				// This increases performance with a slight hit to memory usage.
-				require_once Kohana::find_file('vendor', 'htmlpurifier/library/HTMLPurifier.includes');
-			}
+				if (Kohana::config('purifier.preload'))
+				{
+					// Load the all of HTML Purifier right now.
+					// This increases performance with a slight hit to memory usage.
+					require Kohana::find_file('vendor', 'htmlpurifier/library/HTMLPurifier.includes');
+				}
 
-			// Load the HTML Purifier auto loader
-			require_once Kohana::find_file('vendor', 'htmlpurifier/library/HTMLPurifier.auto');
+				// Load the HTML Purifier auto loader
+				require Kohana::find_file('vendor', 'htmlpurifier/library/HTMLPurifier.auto');
+			}
 
 			// Create a new configuration object
 			$config = HTMLPurifier_Config::createDefault();
+
+			if ( ! Kohana::config('purifier.finalize'))
+			{
+				// Allow configuration to be modified
+				$config->autoFinalize = FALSE;
+			}
+
+			// Use the same character set as Kohana
+			$config->set('Core.Encoding', Kohana::$charset);
 
 			if (is_array($settings = Kohana::config('purifier.settings')))
 			{
