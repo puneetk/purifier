@@ -11,6 +11,9 @@
  */
 class Purifier_Security extends Kohana_Security {
 
+	// Current purifier version
+	const PURIFIER = '1.2.0';
+
 	/**
 	 * @var  HTMLPurifier  singleton instance of the HTML Purifier object
 	 */
