@@ -12,7 +12,7 @@
 class Purifier_Security extends Kohana_Security {
 
 	// Current purifier version
-	const PURIFIER = '1.2.0';
+	const PURIFIER = '1.2.1';
 
 	/**
 	 * @var  HTMLPurifier  singleton instance of the HTML Purifier object
@@ -35,7 +35,7 @@ class Purifier_Security extends Kohana_Security {
 		{
 			if ( ! class_exists('HTMLPurifier_Config', FALSE))
 			{
-				if (Kohana::config('purifier.preload'))
+				if (Kohana::$config->load('purifier.preload'))
 				{
 					// Load the all of HTML Purifier right now.
 					// This increases performance with a slight hit to memory usage.
@@ -49,7 +49,7 @@ class Purifier_Security extends Kohana_Security {
 			// Create a new configuration object
 			$config = HTMLPurifier_Config::createDefault();
 
-			if ( ! Kohana::config('purifier.finalize'))
+			if ( ! Kohana::$config->load('purifier.finalize'))
 			{
 				// Allow configuration to be modified
 				$config->autoFinalize = FALSE;
@@ -58,7 +58,7 @@ class Purifier_Security extends Kohana_Security {
 			// Use the same character set as Kohana
 			$config->set('Core.Encoding', Kohana::$charset);
 
-			if (is_array($settings = Kohana::config('purifier.settings')))
+			if (is_array($settings = Kohana::$config->load('purifier.settings')))
 			{
 				// Load the settings
 				$config->loadArray($settings);
