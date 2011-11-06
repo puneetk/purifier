@@ -7,7 +7,7 @@ class Controller_Demo_Purifier extends Controller_Demo {
 		parent::before();
 
 		// Get HTML Purifier configuration
-		$config = Kohana::config('purifier');
+		$config = Kohana::$config->load('purifier');
 
 		// Do not finalize, we need to be able to set configuration options!
 		$config['finalize'] = FALSE;
