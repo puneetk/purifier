@@ -9,7 +9,7 @@ Overloads [Security::xss_clean](http://kohanaframework.org/guide/api/Security#xs
 If your application is in a Git repository, you can simply add this repository as a submodule:
 
     git submodule add git://github.com/shadowhand/purifier.git modules/purifier
-    git submodule update --init
+    git submodule update --init --recursive
 
 If you want to use a specific version, you can check out the tag of that version:
 
@@ -25,9 +25,9 @@ Always remember to commit changes you make to submodules!
 To install HTML Purifier, you will need to go into the purifier module directory and download it:
 
     cd modules/purifier
-    git submodule update --init
+    git submodule update --init --recursive
 
-*HTML Purifier is enabled as submodule of the Purifier module. Submodules of submodules are not automatically initialized!*
+*HTML Purifier is enabled as submodule of the Purifier module. Submodules of submodules are only automatically initialized if you use the --recursive flag*
 
 ### FTP or Plain Files
 
@@ -37,7 +37,7 @@ You will also need to [download HTML Purifier](http://htmlpurifier.org/download)
 
 ## After Installation
 
-After HTML Purifier is installed, you will need to make the `library/DefinitionCache/Serializer` in `MODPATH/purifier/vendor/htmlpurifier` writable by the web server.
+After HTML Purifier is installed, you will need to make the `library/HTMLPurifier/DefinitionCache/Serializer` in `MODPATH/purifier/vendor/htmlpurifier` writable by the web server.
 
 # Using Purifier
 
